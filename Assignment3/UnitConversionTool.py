@@ -1,14 +1,20 @@
 from tkinter import *
 from tkinter import ttk
 
+
 class ConversionAdministrator():
+    """
+    This class takes in the selected measurement type, unit converting from, value of the converting from unit,
+    and the desired converted unit from the user interface. With the inputs, it creates and calls the correct object
+    to convert the value and returns the converted value to the interface. 
+    """
     def __init__(self, measurementType, convertFromUnit, convertFromValue, convertToUnit):
         self.measurementType = measurementType
         self.convertFromUnit = convertFromUnit
         self.convertFromValue = float(convertFromValue)
         self.convertToUnit = convertToUnit
         self.convertToValue = float(1)
-
+        # Array containing basic conversions for each length combination
         self.lengthConvertList = [
             ["Millimeters", 1, "Centimeters", 0.1],
             ["Millimeters", 1, "Meters", 0.001],
@@ -67,7 +73,7 @@ class ConversionAdministrator():
             ["Miles", 1, "Feet", 5280],
             ["Miles", 1, "Yards", 1760]
         ]
-
+        # Array containing basic conversions for each time combination
         self.timeConvertList = [
             ["Seconds", 60, "Minutes", 1],
             ["Seconds", 3600, "Hours", 1],
@@ -90,161 +96,234 @@ class ConversionAdministrator():
             ["Years", 1, "Hours", 8760],
             ["Years", 1, "Days", 365]
         ]
-        
+       
     def conversionPicker(self):
+        """
+        This method determines the measurement type selected and creates
+        and calls the corresponding object to convert the unit and return
+        the value to the user interface
+        """
+        # First check if the from and to units are the same. If so return the convertFromValue
+        if self.convertFromUnit == self.convertToUnit:
+            return self.convertFromValue
+        # Checks to see if the user is converting temperature 
         if self.measurementType == 'Temperature':
+            # Note that the convertTemperature object does not need a convertList 
             convertTemperature = UnitConverter(self.convertFromUnit, self.convertFromValue, self.convertToUnit, None)
             self.convertToValue = convertTemperature.temperatureConverter()
+        # Checks to see if the user is converting length
         elif self.measurementType == 'Length':
             convertLength = UnitConverter(self.convertFromUnit, self.convertFromValue, self.convertToUnit, self.lengthConvertList)
             self.convertToValue = convertLength.lengthConverter()
+        # Checks to see if the user is converting time
         elif self.measurementType == 'Time':
             convertTime = UnitConverter(self.convertFromUnit, self.convertFromValue, self.convertToUnit, self.timeConvertList)
             self.convertToValue = convertTime.timeConverter()
+        # If none of the options above were selected, return an error
         else:
             return 'Measurment Type could not be determined'
+        # Returns the value from the UnitConverter objects 
         return self.convertToValue
         
     
 class UnitConverter():
+    """
+    This class takes in the unit converting from, value of the converting from unit,
+    the desired converted unit, and converter list and converts the value to the desired
+    unit. Then, it returns the value to the ConversionAdministrator.
+    """
     def __init__(self, convertFromUnit, convertFromValue, convertToUnit, convertList):
         self.convertFromUnit = convertFromUnit
         self.convertFromValue = float(convertFromValue)
         self.convertToUnit = convertToUnit
         self.convertToValue = float(1)
         self.convertList = convertList
-        
+    
+    # Method for converting length
     def lengthConverter(self):        
+        # Iterates through each row in the array to find the row that contains the matching convertFrom and To units
         for row in self.convertList:
+            # Check if the item in current row's index 0 matches the convertFromUnit and index 2 matches convertToUnit
             if row[0] == self.convertFromUnit and row[2] == self.convertToUnit:
+                # If it does, get the base value for converting from and to from the row
                 baseFromValue = row[1]
                 baseToValue = row[3]
                 
+                # Perform the calculation using the known conversion ratio to find the convertToValue the user wants
                 self.convertToValue = (baseToValue * self.convertFromValue) / baseFromValue
                 return self.convertToValue
+        # If no row was found containing the convertFromUnit and convertToUnit, return an error
         return 'Could not find {} and {} in the convertList'.format(self.convertFromUnit, self.convertToUnit)
-                
+    
+    # Method for converting time
     def timeConverter(self):
+        # Iterates through each row in the array to find the row that contains the matching convertFrom and To units
         for row in self.convertList:
+            # Check if the item in current row's index 0 matches the convertFromUnit and index 2 matches convertToUnit
             if row[0] == self.convertFromUnit and row[2] == self.convertToUnit:
+                # If it does, get the base value for converting from and to from the row
                 baseFromValue = row[1]
                 baseToValue = row[3]
                 
+                # Perform the calculation using the known conversion ratio to find the convertToValue the user wants
                 self.convertToValue = (baseToValue * self.convertFromValue) / baseFromValue
                 return self.convertToValue
+        # If no row was found containing the convertFromUnit and convertToUnit, return an error
         return 'Could not find {} and {} in the convertList'.format(self.convertFromUnit, self.convertToUnit)
-               
+    
+    # Method for converting temperature
     def temperatureConverter(self):
+        # Checks what the convertFromUnit and convertToUnit is to determine which formula needs to be used
         if self.convertFromUnit == 'Fahrenheit' and self.convertToUnit == 'Celsius':
+            # Fahrenheit to Celsius formula
             self.convertToValue = (self.convertFromValue - 32) * (5/9)
             return self.convertToValue
+            
         elif self.convertFromUnit == 'Fahrenheit' and self.convertToUnit == 'Kelvin':
+            # Fahrenheit to Kelvin formula
             self.convertToValue = ((self.convertFromValue - 32) * (5/9)) + 273.15
             return self.convertToValue
+            
         elif self.convertFromUnit == 'Celsius' and self.convertToUnit == 'Fahrenheit':
+            # Celsius to Fahrenheit formula
             self.convertToValue = (self.convertFromValue * (9/5)) + 32
             return self.convertToValue
+            
         elif self.convertFromUnit == 'Celsius' and self.convertToUnit == 'Kelvin':
+            # Celsius to Kelvin formula
             self.convertToValue = self.convertFromValue + 273.15
             return self.convertToValue
+            
         elif self.convertFromUnit == 'Kelvin' and self.convertToUnit == 'Celsius':
+            # Kelvin to Celsius formula
             self.convertToValue = self.convertFromValue - 273.15
             return self.convertToValue
+            
         elif self.convertFromUnit == 'Kelvin' and self.convertToUnit == 'Fahrenheit':
+            # Kelvin to Fahrenheit formula
             self.convertToValue = ((self.convertFromValue - 273.15) * (9/5)) + 32
             return self.convertToValue
+        # If no matching convertFromUnit and convertToUnit was found, return an error
         else:
             return 'Unable to convert from {} to {}'.format(self.convertFromUnit, self.convertToUnit)
 
-def calculate(*args):
-    try:
-        convertFromValue = float(fromValue.get())
-        measurementType = measurement_var.get()
-        convertFromUnit = unitFrom_var.get()
-        convertToUnit = unitTo_var.get()
-        convertValue = ConversionAdministrator(measurementType, convertFromUnit, convertFromValue, convertToUnit)
-        returnedValue = convertValue.conversionPicker()
-        if isinstance(returnedValue, str):
-            convertToValue.set(returnedValue)
-        else:
-            convertToValue.set(round(returnedValue, 2))
-    except ValueError:
-        convertToValue.set('Could not calculate value entered')
+###########################################################################################################
+"""
+tkinter secion that defines interface layout and widgets
+"""
 
+
+# Function that bridges the interface with the Unit Conversion classes
+def calculate(*args):
+    # Try block used to convert the unit
+    try:
+        # Gets the value from the interface's text box and converts it to a float
+        convertFromValue = float(fromValue.get())
+        # Gets the measurement type selected from the interface's dropdown
+        measurementType = selectedMeasurement.get()
+        # Gets the convertFromUnit from the interface's dropdown
+        convertFromUnit = selectedFromUnit.get()
+        # Gets the convertToUnit from the interface's dropdown
+        convertToUnit = selectedToUnit.get()
+        # Creates an object with the given inputs from the user interface
+        convertValue = ConversionAdministrator(measurementType, convertFromUnit, convertFromValue, convertToUnit)
+        # sets the returned value to equal the response from the conversionPicker method
+        returnedValue = convertValue.conversionPicker()
+        # Checks to see if the returned value is a string
+        if isinstance(returnedValue, str):
+            # If it is a string, it means there was an error and a string should be passed back to the convertToValue label on the interface
+            convertToValue.set(returnedValue)
+        # If the data type is not a string 
+        else:
+            # Rounds the value to the nearest second decimal place and passes it to the convertToValue label on the interface
+            convertToValue.set(round(returnedValue, 2))
+    # If the calculation failed, return an error that the value is invalid
+    except ValueError:
+        
+        convertToValue.set('Invalid entries. Please check selections')
+
+# Unit dictionary used for the dropdown menus
 units = {
     'Temperature': ('Fahrenheit', 'Celsius', 'Kelvin'),
     'Length': ('Millimeters', 'Centimeters', 'Meters', 'Kilometers', 'Inches', 'Feet', 'Yards', 'Miles'),
     'Time': ('Seconds', 'Minutes', 'Hours', 'Days', 'Years')
 }
 
-def update_units(event):
-    selected_measurement = measurement_var.get()
-    unitFromDropdown['values'] = units.get(selected_measurement, ())
-    unitToDropdown['values'] = units.get(selected_measurement, ())
+# Function that dynamically sets the unitFromDropdown and unitToDropdown menu selections based on what measurement type was selected
+def updateDropdownValues(event):
+    # Gets the measurementType selected from the drop down
+    measurementSelected = selectedMeasurement.get()
+    # Using the selected measurement, gets the dictionary values for the correct measurement type and sets the values to the dropdown menus
+    unitFromDropdown['values'] = units.get(measurementSelected, ())
+    unitToDropdown['values'] = units.get(measurementSelected, ())
     
-    # Clear previous selections
-    unitFrom_var.set('')
-    unitTo_var.set('')
+    # Clears the previous values
+    selectedFromUnit.set('')
+    selectedToUnit.set('')
 
 
-
+# Defines the base components of the tkinter interface
 root = Tk()
 root.title('Unit Conversion Tool')
 
+# Builds a mainframe to place widgets inside
 mainframe = ttk.Frame(root, padding=(3, 3, 12, 12))
 mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
 
-# --- Measurement dropdown ---
-measurement_var = StringVar(value ='Select measurement type...' )
+############# Interface Widgets #############
+
+# Measurement dropdown widget
+selectedMeasurement = StringVar(value ='Select measurement type...' )
 measurementDropdown = ttk.Combobox(
     mainframe,
-    textvariable=measurement_var,
+    textvariable=selectedMeasurement,
     values=('Temperature', 'Length', 'Time'),
     state='readonly',
     width=25
 )
 measurementDropdown.grid(column=3, row=1, sticky=W)
-measurementDropdown.bind("<<ComboboxSelected>>", update_units)
+measurementDropdown.bind("<<ComboboxSelected>>", updateDropdownValues)
 
-# --------------------------------
-
-
-# --- UnitFrom dropdown ---
-unitFrom_var = StringVar(value = 'Select unit...')
+# UnitFrom dropdown widget
+selectedFromUnit = StringVar(value = 'Select unit...')
 unitFromDropdown = ttk.Combobox(
     mainframe,
-    textvariable=unitFrom_var,
+    textvariable=selectedFromUnit,
     state='readonly',
     width=25
 )
 unitFromDropdown.grid(column=3, row=2, sticky=W)
-# --------------------------------
 
 
-# --- UnitTo dropdown ---
-unitTo_var = StringVar(value = 'Select unit...')
+# UnitTo dropdown widget
+selectedToUnit = StringVar(value = 'Select unit...')
 unitToDropdown = ttk.Combobox(
     mainframe,
-    textvariable=unitTo_var,
+    textvariable=selectedToUnit,
     state='readonly',
     width=25
 )
 unitToDropdown.grid(column=3, row=3, sticky=W)
-# --------------------------------
 
-
+# convertFromValue Entry widget
 convertFromValue = StringVar(value = 'Enter unit value...')
 fromValue = ttk.Entry(mainframe, width=20, textvariable=convertFromValue)
 fromValue.grid(column=2, row=2, sticky=(W, E))
 
-
+# convertToValue Label widget
 convertToValue = StringVar()
 ttk.Label(mainframe, textvariable=convertToValue).grid(column=2, row=3, sticky=W)
 
+# Calculate Button widget
 ttk.Button(mainframe, text='Calculate', command=calculate).grid(column=3, row=4, sticky=W)
 
+# '=' sign Label widget
 ttk.Label(mainframe, text='=').grid(column=1, row=3, sticky=E)
 
+
+
+
+# Defines the base components of the tkinter interface
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 mainframe.columnconfigure(2, weight=1)
